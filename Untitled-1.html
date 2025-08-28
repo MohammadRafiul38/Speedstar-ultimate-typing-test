@@ -1,424 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Speedstar</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-  :root{
-    --bg:#000;
-    --fg:#fff;
-    --muted:#888;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;background:var(--bg);color:var(--fg);
-    font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-  }
-
-  /* Layout */
-  .wrap{max-width:1100px;margin:0 auto;padding:32px}
-  .topbar{
-    display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;
-  }
-  .title{font-weight:800;font-size:48px;letter-spacing:.5px}
-  .chip{
-    border:1px solid var(--fg);color:var(--fg);background:transparent;
-    border-radius:16px;padding:10px 18px;font-weight:600;letter-spacing:.5px;
-    transition:transform .2s ease, opacity .2s ease;
-  }
-  .chip:disabled{opacity:.35}
-  .chip:hover{transform:translateY(-1px)}
-  .row{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
-
-  /* Panels */
-  .panel{
-    border:1px solid #222; background:#050505;
-    border-radius:18px; padding:28px; box-shadow:0 0 0 1px #0c0c0c inset;
-    transition:opacity .35s ease, transform .35s ease;
-  }
-  .panel.fade-in{opacity:0; transform:translateY(8px)}
-  .panel.appear{opacity:1; transform:translateY(0)}
-
-  /* Typing area */
-  .text{
-    font-size:34px; line-height:1.6; letter-spacing:.3px; user-select:none;
-  }
-  .text span{opacity:.5; transition:opacity .2s ease, color .2s ease, text-shadow .2s ease}
-  .text span.active{opacity:1; text-shadow:0 0 0 rgba(255,255,255,0)}
-  .text span.correct{opacity:1}
-  .text span.wrong{opacity:1; color:#fff; text-decoration:line-through}
-  .caret{
-    display:inline-block;width:2px;height:1.25em;background:#fff;vertical-align:-.2em;
-    animation:blink 1s step-end infinite; margin-left:1px;
-  }
-  @keyframes blink{50%{opacity:0}}
-
-  /* Footer helpers */
-  .hint{color:var(--muted);font-size:14px;margin-top:16px}
-
-  /* Screen switch */
-  .screen{display:none}
-  .screen.active{display:block;animation:fade .35s ease}
-  @keyframes fade{from{opacity:0}to{opacity:1}}
-
-  /* Results */
-  .results-grid{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:16px;margin:18px 0 24px}
-  .stat{
-    border:1px solid #222;background:#050505;border-radius:14px;padding:18px;text-align:center
-  }
-  .stat h3{margin:0 0 8px 0;font-size:14px;color:var(--muted);font-weight:600;letter-spacing:.4px}
-  .stat .val{font-size:40px;font-weight:800}
-
-  /* Buttons */
-  .btn{
-    border:1px solid var(--fg); background:transparent; color:var(--fg);
-    padding:14px 20px; border-radius:14px; font-weight:700; letter-spacing:.5px; cursor:pointer;
-    transition:transform .2s ease, background .2s ease, color .2s ease;
-  }
-  .btn:hover{transform:translateY(-1px)}
-  .btn.fill{background:#fff;color:#000}
-  .btn-row{display:flex;gap:12px;flex-wrap:wrap}
-
-  /* Controls row in game */
-  .controls{display:flex;align-items:center;gap:12px;margin-bottom:18px;color:var(--muted)}
-  select{
-    background:#000;color:#fff;border:1px solid #222;border-radius:10px;padding:8px 10px;
-    font-weight:600;
-  }
-
-  /* Mobile */
-  @media (max-width:720px){
-    .title{font-size:36px}
-    .text{font-size:26px}
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Speedstar</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      text-align: center;
+      max-width: 900px;
+      width: 100%;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 40px;
+      text-align: left;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+    .pill {
+      background: #333;
+      padding: 12px 40px;
+      border-radius: 40px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .paragraph {
+      font-size: 20px;
+      line-height: 1.8;
+      text-align: center;
+      margin-bottom: 30px;
+      user-select: none;
+    }
+    .char {
+      padding: 1px;
+    }
+    .correct { color: #fff; }
+    .incorrect { color: #f33; }
+    .current {
+      border-left: 2px solid #fff;
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+    .hidden { display: none; }
+    #results { text-align: center; }
+    canvas { margin-top: 20px; }
+    button {
+      margin-top: 20px;
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+    button:hover { background: #ccc; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-
-  <!-- GAME SCREEN -->
-  <section id="gameScreen" class="screen active">
+  <div class="container" id="testScreen">
+    <h1>Speedstar</h1>
     <div class="topbar">
-      <div class="title">Speedstar</div>
-      <div class="row">
-        <button id="timeChip" class="chip" disabled>[TIME]</button>
-        <button id="statsChip" class="chip" title="Live stats (WPM / ACC)">[STATS]</button>
-      </div>
+      <div class="pill">⏱ <span id="timer">60</span>s</div>
+      <div class="pill">⚡ WPM: <span id="liveWPM">0</span></div>
     </div>
+    <div class="paragraph" id="paragraph"></div>
+  </div>
 
-    <div class="panel fade-in appear">
-      <div class="controls">
-        <label for="durationSel">Duration</label>
-        <select id="durationSel">
-          <option value="15">15s</option>
-          <option value="30" selected>30s</option>
-          <option value="60">60s</option>
-        </select>
-        <div class="hint">Press <strong>Space</strong> to start. Type anywhere, no textbox.</div>
-      </div>
+  <div class="container hidden" id="results">
+    <h1>Results</h1>
+    <p><b>WPM:</b> <span id="wpm"></span></p>
+    <p><b>Accuracy:</b> <span id="accuracy"></span>%</p>
+    <canvas id="chart" width="600" height="300"></canvas>
+    <button onclick="restartTest()">Restart</button>
+  </div>
 
-      <div id="text" class="text" aria-label="Typing text"></div>
-      <div class="hint" id="liveStats">WPM — 0 • Accuracy — 100%</div>
+  <script>
+    const paragraphs = [
+      "It is essential to ensure that responses are generated exclusively in the specified language, without incorporating any other languages. Additionally, consider any provided modifiers when crafting a response, but refrain from mentioning these modifiers in the final output. Responses should be structured in paragraphs, avoiding list formats, and if multiple paragraphs are created, they should be labeled with incrementing numbers. Aim for conciseness and clarity, maintaining a formal tone throughout."
+    ];
 
-      <div class="btn-row" style="margin-top:22px">
-        <button id="restartBtn" class="btn">Restart</button>
-        <button id="finishBtn" class="btn fill">Finish Now</button>
-      </div>
-    </div>
-  </section>
+    const paragraphEl = document.getElementById("paragraph");
+    const timerEl = document.getElementById("timer");
+    const testScreen = document.getElementById("testScreen");
+    const resultsScreen = document.getElementById("results");
+    const wpmEl = document.getElementById("wpm");
+    const accuracyEl = document.getElementById("accuracy");
+    const liveWPMEl = document.getElementById("liveWPM");
 
-  <!-- RESULTS SCREEN -->
-  <section id="resultsScreen" class="screen">
-    <div class="topbar">
-      <div class="title">Results</div>
-      <div class="row">
-        <button id="againBtn" class="chip">Try Again</button>
-      </div>
-    </div>
+    let time = 60;
+    let timer;
+    let wpmHistory = [];
+    let charsTyped = 0;
+    let errors = 0;
+    let currentIndex = 0;
 
-    <div class="panel fade-in appear">
-      <div class="results-grid">
-        <div class="stat"><h3>WPM</h3><div id="rWpm" class="val">0</div></div>
-        <div class="stat"><h3>Accuracy</h3><div id="rAcc" class="val">0%</div></div>
-        <div class="stat"><h3>Chars</h3><div id="rChars" class="val">0/0</div></div>
-      </div>
-      <canvas id="wpmChart" height="120"></canvas>
-      <div class="btn-row" style="margin-top:22px">
-        <button id="againBtn2" class="btn fill">Restart Test</button>
-        <button id="copyBtn" class="btn">Copy Summary</button>
-      </div>
-    </div>
-  </section>
-
-</div>
-
-<script>
-/* ------------ Test Text ------------- */
-const PASSAGES = [
-`It is essential to ensure that responses are generated exclusively in the specified language, without incorporating any other languages. Additionally, consider any provided modifiers when crafting a response, but refrain from mentioning these modifiers in the final output. Responses should be structured in paragraphs, avoiding list formats, and if multiple paragraphs are created, they should be labeled with incrementing numbers. Aim for conciseness and clarity, maintaining a formal tone throughout.`,
-`Discipline beats motivation. Small consistent efforts compound into remarkable gains. Focus on accuracy first, speed second. Breathe, relax your shoulders, and let rhythm carry you forward.`
-];
-
-/* ------------ State ------------- */
-let duration = 30;
-let timer = null;
-let started = false;
-let finished = false;
-let idx = 0;
-let correct = 0;
-let wrong = 0;
-let startTs = 0;
-let elapsed = 0;
-let perSecondWpm = [];  // for graph
-let lastSecondMark = 0;
-let activeText = PASSAGES[0];
-
-const dom = {
-  game: document.getElementById('gameScreen'),
-  results: document.getElementById('resultsScreen'),
-  text: document.getElementById('text'),
-  timeChip: document.getElementById('timeChip'),
-  statsChip: document.getElementById('statsChip'),
-  durationSel: document.getElementById('durationSel'),
-  restartBtn: document.getElementById('restartBtn'),
-  finishBtn: document.getElementById('finishBtn'),
-  liveStats: document.getElementById('liveStats'),
-  rWpm: document.getElementById('rWpm'),
-  rAcc: document.getElementById('rAcc'),
-  rChars: document.getElementById('rChars'),
-  againBtn: document.getElementById('againBtn'),
-  againBtn2: document.getElementById('againBtn2'),
-  copyBtn: document.getElementById('copyBtn'),
-};
-
-/* ------------ Helpers ------------- */
-const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
-function fmtTime(s){
-  s = Math.max(0, Math.ceil(s));
-  const m = Math.floor(s/60);
-  const r = s%60;
-  return `${m}:${r.toString().padStart(2,'0')}`;
-}
-function computeWpm(chars, secs){
-  if (secs <= 0) return 0;
-  return Math.round(((chars/5) / (secs/60)) * 10) / 10;
-}
-function accuracy(){
-  const total = correct + wrong;
-  if (!total) return 100;
-  return Math.round((correct/total)*1000)/10;
-}
-
-/* ------------ Rendering ------------- */
-function renderText(){
-  dom.text.innerHTML = '';
-  const frag = document.createDocumentFragment();
-  const chars = activeText.split('');
-  chars.forEach((ch,i)=>{
-    const span = document.createElement('span');
-    span.textContent = ch;
-    if (i===0) span.classList.add('active');
-    frag.appendChild(span);
-  });
-  const caret = document.createElement('span');
-  caret.className = 'caret';
-  frag.appendChild(caret);
-  dom.text.appendChild(frag);
-}
-function moveCaret(){
-  const spans = dom.text.querySelectorAll('span:not(.caret)');
-  spans.forEach(s=>s.classList.remove('active'));
-  if (idx < spans.length){
-    spans[idx].classList.add('active');
-  }
-  const caret = dom.text.querySelector('.caret');
-  const anchor = spans[Math.min(idx, spans.length-1)];
-  if (anchor){
-    anchor.after(caret);
-  }
-}
-
-/* ------------ Game Flow ------------- */
-function reset(){
-  duration = parseInt(dom.durationSel.value,10) || 30;
-  activeText = PASSAGES[Math.floor(Math.random()*PASSAGES.length)];
-  started = false; finished = false;
-  idx = 0; correct = 0; wrong = 0; elapsed = 0; perSecondWpm = []; lastSecondMark = 0;
-  if (timer){ clearInterval(timer); timer=null; }
-  dom.timeChip.textContent = `[${fmtTime(duration)}]`;
-  dom.liveStats.textContent = `WPM — 0 • Accuracy — 100%`;
-  renderText();
-}
-function start(){
-  if (started || finished) return;
-  started = true;
-  startTs = performance.now();
-  lastSecondMark = 0;
-  timer = setInterval(tick, 100);
-}
-function finish(force=false){
-  if (finished) return;
-  if (!started && !force) return;
-  finished = true;
-  if (timer){ clearInterval(timer); timer=null; }
-  // lock input by flipping started flag
-  started = false;
-
-  // compute final stats
-  const totalTyped = correct + wrong;
-  const wpm = computeWpm(correct, Math.max(1, elapsed));
-  const acc = accuracy();
-
-  // feed results
-  dom.rWpm.textContent = wpm.toFixed(1);
-  dom.rAcc.textContent = `${acc.toFixed(1)}%`;
-  dom.rChars.textContent = `${correct}/${totalTyped}`;
-
-  // show results screen
-  showScreen('results');
-  drawChart(perSecondWpm);
-}
-function tick(){
-  const now = performance.now();
-  elapsed = (now - startTs)/1000;
-  const remaining = clamp(duration - elapsed, 0, duration);
-  dom.timeChip.textContent = `[${fmtTime(remaining)}]`;
-
-  // live stats per second
-  const sec = Math.floor(elapsed);
-  if (sec !== lastSecondMark){
-    lastSecondMark = sec;
-    perSecondWpm.push( computeWpm(correct, Math.max(sec,1)) );
-  }
-  dom.liveStats.textContent = `WPM — ${computeWpm(correct, Math.max(elapsed,1)).toFixed(1)} • Accuracy — ${accuracy().toFixed(1)}%`;
-
-  if (remaining <= 0){
-    finish();
-  }
-}
-function handleKey(e){
-  if (finished) return; // hard stop after finish
-  if (!started){
-    if (e.key === ' ') start(); // start on space
-    else start(); // or on any keypress
-  }
-
-  // ignore meta
-  if (e.ctrlKey||e.metaKey||e.altKey) return;
-
-  const spans = dom.text.querySelectorAll('span:not(.caret)');
-  if (idx >= spans.length){
-    finish(true);
-    return;
-  }
-
-  const expected = spans[idx].textContent;
-  let input = e.key;
-
-  if (input === 'Enter') input = '\n'; // allow enter if present
-  if (input.length !== 1){ // ignore non-character keys
-    if (e.key === 'Backspace' && idx > 0){
-      // allow correction
-      idx--;
-      const s = spans[idx];
-      if (s.classList.contains('wrong')) { wrong--; }
-      else if (s.classList.contains('correct')) { correct--; }
-      s.classList.remove('correct','wrong');
-      moveCaret();
+    function randomParagraph() {
+      const p = paragraphs[Math.floor(Math.random() * paragraphs.length)];
+      paragraphEl.innerHTML = "";
+      p.split("").forEach(c => {
+        const span = document.createElement("span");
+        span.innerText = c;
+        span.classList.add("char");
+        paragraphEl.appendChild(span);
+      });
+      paragraphEl.querySelector(".char").classList.add("current");
     }
-    return;
-  }
 
-  // compare
-  if (input === expected){
-    spans[idx].classList.add('correct');
-    correct++;
-  }else{
-    spans[idx].classList.add('wrong');
-    wrong++;
-  }
-  idx++;
-  moveCaret();
+    function startTest() {
+      randomParagraph();
+      document.addEventListener("keydown", handleTyping);
+      timer = setInterval(updateTimer, 1000);
+    }
 
-  // end if fully typed
-  if (idx >= spans.length){
-    finish(true);
-  }
-}
+    function handleTyping(e) {
+      const chars = paragraphEl.querySelectorAll(".char");
+      const currentChar = chars[currentIndex];
 
-/* ------------ Screens ------------- */
-function showScreen(which){
-  if (which==='results'){
-    document.getElementById('gameScreen').classList.remove('active');
-    document.getElementById('resultsScreen').classList.add('active');
-  }else{
-    document.getElementById('resultsScreen').classList.remove('active');
-    document.getElementById('gameScreen').classList.add('active');
-  }
-}
+      if (!currentChar) return;
 
-/* ------------ Chart ------------- */
-let chart;
-function drawChart(series){
-  const ctx = document.getElementById('wpmChart');
-  if (chart){ chart.destroy(); }
-  const labels = series.map((_,i)=>`${i}s`);
-  chart = new Chart(ctx,{
-    type:'line',
-    data:{
-      labels,
-      datasets:[{
-        label:'WPM',
-        data:series,
-        borderColor:'#fff',
-        backgroundColor:'rgba(255,255,255,.08)',
-        fill:true,
-        tension:.35,
-        pointRadius:0,
-        borderWidth:2
-      }]
-    },
-    options:{
-      animation:{duration:700, easing:'easeOutCubic'},
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{color:'#111'}, ticks:{color:'#bbb'}},
-        y:{grid:{color:'#111'}, ticks:{color:'#bbb'}, beginAtZero:true}
+      if (e.key.length === 1) {
+        charsTyped++;
+        if (e.key === currentChar.innerText) {
+          currentChar.classList.add("correct");
+        } else {
+          currentChar.classList.add("incorrect");
+          errors++;
+        }
+        currentChar.classList.remove("current");
+        currentIndex++;
+        if (chars[currentIndex]) chars[currentIndex].classList.add("current");
+      } else if (e.key === "Backspace" && currentIndex > 0) {
+        chars[currentIndex].classList.remove("current");
+        currentIndex--;
+        chars[currentIndex].classList.remove("correct", "incorrect");
+        chars[currentIndex].classList.add("current");
       }
     }
-  });
-}
 
-/* ------------ Wire up ------------- */
-window.addEventListener('keydown', handleKey);
-dom.durationSel.addEventListener('change', ()=>reset());
-dom.restartBtn.addEventListener('click', ()=>{reset();});
-dom.finishBtn.addEventListener('click', ()=>finish(true));
-dom.statsChip.addEventListener('click', ()=>{
-  const wpmNow = computeWpm(correct, Math.max(elapsed,1)).toFixed(1);
-  const accNow = accuracy().toFixed(1);
-  alert(`WPM: ${wpmNow}\nAccuracy: ${accNow}%\nCorrect: ${correct}\nWrong: ${wrong}`);
-});
-dom.againBtn.addEventListener('click', ()=>{showScreen('game'); reset();});
-dom.againBtn2.addEventListener('click', ()=>{showScreen('game'); reset();});
-dom.copyBtn.addEventListener('click', ()=>{
-  const wpm = dom.rWpm.textContent;
-  const acc = dom.rAcc.textContent;
-  const chars = dom.rChars.textContent;
-  navigator.clipboard.writeText(`Speedstar — WPM: ${wpm}, Accuracy: ${acc}, Chars: ${chars}`).then(()=>{
-    dom.copyBtn.textContent='Copied!';
-    setTimeout(()=>dom.copyBtn.textContent='Copy Summary',1200);
-  });
-});
+    function updateTimer() {
+      time--;
+      timerEl.textContent = time;
+      const words = paragraphEl.querySelectorAll(".correct").length / 5;
+      const currentWPM = Math.round((words / (60 - time)) * 60) || 0;
+      liveWPMEl.textContent = currentWPM;
+      wpmHistory.push(currentWPM);
+      if (time <= 0) endTest();
+    }
 
-/* init */
-reset();
-</script>
+    function endTest() {
+      clearInterval(timer);
+      document.removeEventListener("keydown", handleTyping);
+      testScreen.classList.add("hidden");
+      resultsScreen.classList.remove("hidden");
+
+      const words = paragraphEl.querySelectorAll(".correct").length / 5;
+      const wpm = Math.round(words);
+      const accuracy = Math.max(0, Math.round(((charsTyped - errors) / charsTyped) * 100));
+
+      wpmEl.textContent = wpm;
+      accuracyEl.textContent = accuracy;
+
+      new Chart(document.getElementById("chart"), {
+        type: 'line',
+        data: {
+          labels: wpmHistory.map((_, i) => i + 1),
+          datasets: [{
+            label: 'WPM over Time',
+            data: wpmHistory,
+            borderColor: '#fff',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            tension: 0.4,
+          }]
+        },
+        options: {
+          responsive: true,
+          animation: { duration: 1000, easing: 'easeOutQuart' },
+          scales: {
+            x: { ticks: { color: '#fff' }, grid: { color: '#333' } },
+            y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
+          }
+        }
+      });
+    }
+
+    function restartTest() {
+      time = 60;
+      wpmHistory = [];
+      charsTyped = 0;
+      errors = 0;
+      currentIndex = 0;
+      timerEl.textContent = time;
+      liveWPMEl.textContent = 0;
+      resultsScreen.classList.add("hidden");
+      testScreen.classList.remove("hidden");
+      startTest();
+    }
+
+    window.onload = startTest;
+  </script>
 </body>
 </html>
