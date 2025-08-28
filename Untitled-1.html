@@ -33,25 +33,13 @@
       font-size: 28px;
       line-height: 2;
       text-align: left;
-      margin-bottom: 20px;
+      margin-bottom: 40px;
       min-height: 120px;
     }
 
-    .char {
-      color: #666; /* default grey */
-    }
-    .char.correct {
-      color: #fff; /* correct */
-    }
-    .char.incorrect {
-      color: #ff3333; /* red for mistakes */
-    }
-
-    #input {
-      opacity: 0;
-      position: absolute;
-      left: -9999px;
-    }
+    .char { color: #666; }
+    .char.correct { color: #fff; }
+    .char.incorrect { color: #ff3333; }
 
     #result {
       display: none;
@@ -68,9 +56,29 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    button:hover {
-      background: #222;
+    button:hover { background: #222; }
+
+    /* On-screen keyboard */
+    #keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 30px;
+      gap: 4px;
     }
+    .key {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+      color: #888;
+      font-size: 14px;
+    }
+    .key.active { background: #fff; color: #000; }
   </style>
 </head>
 <body>
@@ -81,7 +89,8 @@
     </div>
 
     <div id="text"></div>
-    <input type="text" id="input" autofocus />
+
+    <div id="keyboard"></div>
 
     <div id="result">
       <h2>Results</h2>
@@ -101,19 +110,30 @@
     ];
 
     const textEl = document.getElementById("text");
-    const inputEl = document.getElementById("input");
     const timerEl = document.getElementById("timer");
     const wpmEl = document.getElementById("wpm");
     const resultEl = document.getElementById("result");
     const finalWpmEl = document.getElementById("finalWpm");
     const accuracyEl = document.getElementById("accuracy");
+    const keyboardEl = document.getElementById("keyboard");
 
     let time = 60;
     let timer = null;
     let started = false;
     let currentText = "";
+    let currentIndex = 0;
     let correctChars = 0;
     let totalTyped = 0;
+
+    // Build keyboard layout
+    const keys = "abcdefghijklmnopqrstuvwxyz".split("");
+    keys.forEach(k => {
+      const div = document.createElement("div");
+      div.classList.add("key");
+      div.textContent = k;
+      div.setAttribute("data-key", k);
+      keyboardEl.appendChild(div);
+    });
 
     function loadParagraph() {
       currentText = paragraphs[Math.floor(Math.random() * paragraphs.length)];
@@ -124,6 +144,7 @@
         span.classList.add("char");
         textEl.appendChild(span);
       });
+      currentIndex = 0;
     }
 
     function startTimer() {
@@ -137,35 +158,41 @@
       }, 1000);
     }
 
-    inputEl.addEventListener("input", () => {
+    document.addEventListener("keydown", e => {
       if (!started) {
         started = true;
         startTimer();
       }
 
       const chars = document.querySelectorAll(".char");
-      const typed = inputEl.value.split("");
+
+      // Skip non-character keys
+      if (e.key.length !== 1) return;
+
+      const typedChar = e.key;
+      const expectedChar = currentText[currentIndex];
+
       totalTyped++;
+      if (typedChar === expectedChar) {
+        chars[currentIndex].classList.add("correct");
+        correctChars++;
+      } else {
+        chars[currentIndex].classList.add("incorrect");
+      }
+      currentIndex++;
 
-      chars.forEach((charSpan, i) => {
-        if (typed[i] == null) {
-          charSpan.classList.remove("correct", "incorrect");
-        } else if (typed[i] === charSpan.innerText) {
-          charSpan.classList.add("correct");
-          charSpan.classList.remove("incorrect");
-        } else {
-          charSpan.classList.add("incorrect");
-          charSpan.classList.remove("correct");
-        }
-      });
-
-      if (typed.length === currentText.length && time > 0) {
-        correctChars += typed.filter((c, i) => c === currentText[i]).length;
-        inputEl.value = "";
+      if (currentIndex === currentText.length && time > 0) {
         loadParagraph();
       }
 
       updateWPM();
+
+      // Keyboard highlight
+      const keyDiv = document.querySelector(`.key[data-key="${typedChar.toLowerCase()}"]`);
+      if (keyDiv) {
+        keyDiv.classList.add("active");
+        setTimeout(() => keyDiv.classList.remove("active"), 150);
+      }
     });
 
     function updateWPM() {
@@ -176,8 +203,8 @@
     }
 
     function endTest() {
-      inputEl.disabled = true;
       textEl.style.display = "none";
+      keyboardEl.style.display = "none";
       resultEl.style.display = "block";
 
       let minutes = (60 - time) / 60;
@@ -192,20 +219,17 @@
     function resetTest() {
       time = 60;
       timerEl.textContent = time;
-      inputEl.value = "";
-      inputEl.disabled = false;
       started = false;
       correctChars = 0;
       totalTyped = 0;
       textEl.style.display = "block";
+      keyboardEl.style.display = "flex";
       resultEl.style.display = "none";
       loadParagraph();
-      inputEl.focus();
     }
 
     // init
     loadParagraph();
-    inputEl.focus();
   </script>
 </body>
 </html>
