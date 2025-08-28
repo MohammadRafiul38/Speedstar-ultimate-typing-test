@@ -2,219 +2,210 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Speedstar</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>SpeedStar Typing Test</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: "Inter", sans-serif;
+      font-family: monospace;
       background: #000;
       color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
+      flex-direction: column;
     }
-    .container {
-      text-align: center;
+
+    #container {
+      width: 80%;
       max-width: 900px;
-      width: 100%;
-      padding: 20px;
+      text-align: center;
     }
-    h1 {
-      font-size: 48px;
-      font-weight: 800;
-      margin-bottom: 40px;
-      text-align: left;
-    }
-    .topbar {
+
+    #stats {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
+      font-size: 18px;
     }
-    .pill {
-      background: #333;
-      padding: 12px 40px;
-      border-radius: 40px;
-      font-size: 20px;
-      font-weight: 500;
+
+    #text {
+      font-size: 28px;
+      line-height: 2;
+      text-align: left;
+      margin-bottom: 20px;
+      min-height: 120px;
     }
-    .paragraph {
-      font-size: 20px;
-      line-height: 1.8;
-      text-align: center;
-      margin-bottom: 30px;
-      user-select: none;
-    }
+
     .char {
-      padding: 1px;
+      color: #666; /* default grey */
     }
-    .correct { color: #fff; }
-    .incorrect { color: #f33; }
-    .current {
-      border-left: 2px solid #fff;
-      animation: blink 1s step-start infinite;
+    .char.correct {
+      color: #fff; /* correct */
     }
-    @keyframes blink {
-      50% { border-color: transparent; }
+    .char.incorrect {
+      color: #ff3333; /* red for mistakes */
     }
-    .hidden { display: none; }
-    #results { text-align: center; }
-    canvas { margin-top: 20px; }
+
+    #input {
+      opacity: 0;
+      position: absolute;
+      left: -9999px;
+    }
+
+    #result {
+      display: none;
+      font-size: 24px;
+      margin-top: 40px;
+      text-align: center;
+    }
+
     button {
       margin-top: 20px;
-      background: #fff;
-      color: #000;
-      border: none;
+      background: #111;
+      color: #fff;
+      border: 1px solid #444;
       padding: 10px 20px;
       cursor: pointer;
-      font-weight: bold;
-      border-radius: 8px;
     }
-    button:hover { background: #ccc; }
+    button:hover {
+      background: #222;
+    }
   </style>
 </head>
 <body>
-  <div class="container" id="testScreen">
-    <h1>Speedstar</h1>
-    <div class="topbar">
-      <div class="pill">⏱ <span id="timer">60</span>s</div>
-      <div class="pill">⚡ WPM: <span id="liveWPM">0</span></div>
+  <div id="container">
+    <div id="stats">
+      <div>Time: <span id="timer">60</span>s</div>
+      <div>WPM: <span id="wpm">0</span></div>
     </div>
-    <div class="paragraph" id="paragraph"></div>
-  </div>
 
-  <div class="container hidden" id="results">
-    <h1>Results</h1>
-    <p><b>WPM:</b> <span id="wpm"></span></p>
-    <p><b>Accuracy:</b> <span id="accuracy"></span>%</p>
-    <canvas id="chart" width="600" height="300"></canvas>
-    <button onclick="restartTest()">Restart</button>
+    <div id="text"></div>
+    <input type="text" id="input" autofocus />
+
+    <div id="result">
+      <h2>Results</h2>
+      <p>WPM: <span id="finalWpm"></span></p>
+      <p>Accuracy: <span id="accuracy"></span>%</p>
+      <button onclick="resetTest()">Try Again</button>
+    </div>
   </div>
 
   <script>
     const paragraphs = [
-      "It is essential to ensure that responses are generated exclusively in the specified language, without incorporating any other languages. Additionally, consider any provided modifiers when crafting a response, but refrain from mentioning these modifiers in the final output. Responses should be structured in paragraphs, avoiding list formats, and if multiple paragraphs are created, they should be labeled with incrementing numbers. Aim for conciseness and clarity, maintaining a formal tone throughout."
+      "The quick brown fox jumps over the lazy dog.",
+      "Typing fast requires focus and consistent practice every day.",
+      "Dark themed apps are easy on the eyes and look super clean.",
+      "Speed typing tests measure words per minute and accuracy.",
+      "Monkeys love typing bananas on monkeytype dot com."
     ];
 
-    const paragraphEl = document.getElementById("paragraph");
+    const textEl = document.getElementById("text");
+    const inputEl = document.getElementById("input");
     const timerEl = document.getElementById("timer");
-    const testScreen = document.getElementById("testScreen");
-    const resultsScreen = document.getElementById("results");
     const wpmEl = document.getElementById("wpm");
+    const resultEl = document.getElementById("result");
+    const finalWpmEl = document.getElementById("finalWpm");
     const accuracyEl = document.getElementById("accuracy");
-    const liveWPMEl = document.getElementById("liveWPM");
 
     let time = 60;
-    let timer;
-    let wpmHistory = [];
-    let charsTyped = 0;
-    let errors = 0;
-    let currentIndex = 0;
+    let timer = null;
+    let started = false;
+    let currentText = "";
+    let correctChars = 0;
+    let totalTyped = 0;
 
-    function randomParagraph() {
-      const p = paragraphs[Math.floor(Math.random() * paragraphs.length)];
-      paragraphEl.innerHTML = "";
-      p.split("").forEach(c => {
+    function loadParagraph() {
+      currentText = paragraphs[Math.floor(Math.random() * paragraphs.length)];
+      textEl.innerHTML = "";
+      currentText.split("").forEach(c => {
         const span = document.createElement("span");
         span.innerText = c;
         span.classList.add("char");
-        paragraphEl.appendChild(span);
+        textEl.appendChild(span);
       });
-      paragraphEl.querySelector(".char").classList.add("current");
     }
 
-    function startTest() {
-      randomParagraph();
-      document.addEventListener("keydown", handleTyping);
-      timer = setInterval(updateTimer, 1000);
-    }
-
-    function handleTyping(e) {
-      const chars = paragraphEl.querySelectorAll(".char");
-      const currentChar = chars[currentIndex];
-
-      if (!currentChar) return;
-
-      if (e.key.length === 1) {
-        charsTyped++;
-        if (e.key === currentChar.innerText) {
-          currentChar.classList.add("correct");
-        } else {
-          currentChar.classList.add("incorrect");
-          errors++;
+    function startTimer() {
+      timer = setInterval(() => {
+        time--;
+        timerEl.textContent = time;
+        if (time <= 0) {
+          clearInterval(timer);
+          endTest();
         }
-        currentChar.classList.remove("current");
-        currentIndex++;
-        if (chars[currentIndex]) chars[currentIndex].classList.add("current");
-      } else if (e.key === "Backspace" && currentIndex > 0) {
-        chars[currentIndex].classList.remove("current");
-        currentIndex--;
-        chars[currentIndex].classList.remove("correct", "incorrect");
-        chars[currentIndex].classList.add("current");
-      }
+      }, 1000);
     }
 
-    function updateTimer() {
-      time--;
-      timerEl.textContent = time;
-      const words = paragraphEl.querySelectorAll(".correct").length / 5;
-      const currentWPM = Math.round((words / (60 - time)) * 60) || 0;
-      liveWPMEl.textContent = currentWPM;
-      wpmHistory.push(currentWPM);
-      if (time <= 0) endTest();
+    inputEl.addEventListener("input", () => {
+      if (!started) {
+        started = true;
+        startTimer();
+      }
+
+      const chars = document.querySelectorAll(".char");
+      const typed = inputEl.value.split("");
+      totalTyped++;
+
+      chars.forEach((charSpan, i) => {
+        if (typed[i] == null) {
+          charSpan.classList.remove("correct", "incorrect");
+        } else if (typed[i] === charSpan.innerText) {
+          charSpan.classList.add("correct");
+          charSpan.classList.remove("incorrect");
+        } else {
+          charSpan.classList.add("incorrect");
+          charSpan.classList.remove("correct");
+        }
+      });
+
+      if (typed.length === currentText.length && time > 0) {
+        correctChars += typed.filter((c, i) => c === currentText[i]).length;
+        inputEl.value = "";
+        loadParagraph();
+      }
+
+      updateWPM();
+    });
+
+    function updateWPM() {
+      let minutes = (60 - time) / 60;
+      let words = correctChars / 5;
+      let wpm = minutes > 0 ? Math.round(words / minutes) : 0;
+      wpmEl.textContent = wpm;
     }
 
     function endTest() {
-      clearInterval(timer);
-      document.removeEventListener("keydown", handleTyping);
-      testScreen.classList.add("hidden");
-      resultsScreen.classList.remove("hidden");
+      inputEl.disabled = true;
+      textEl.style.display = "none";
+      resultEl.style.display = "block";
 
-      const words = paragraphEl.querySelectorAll(".correct").length / 5;
-      const wpm = Math.round(words);
-      const accuracy = Math.max(0, Math.round(((charsTyped - errors) / charsTyped) * 100));
+      let minutes = (60 - time) / 60;
+      let words = correctChars / 5;
+      let wpm = minutes > 0 ? Math.round(words / minutes) : 0;
+      let accuracy = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 0;
 
-      wpmEl.textContent = wpm;
+      finalWpmEl.textContent = wpm;
       accuracyEl.textContent = accuracy;
-
-      new Chart(document.getElementById("chart"), {
-        type: 'line',
-        data: {
-          labels: wpmHistory.map((_, i) => i + 1),
-          datasets: [{
-            label: 'WPM over Time',
-            data: wpmHistory,
-            borderColor: '#fff',
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            tension: 0.4,
-          }]
-        },
-        options: {
-          responsive: true,
-          animation: { duration: 1000, easing: 'easeOutQuart' },
-          scales: {
-            x: { ticks: { color: '#fff' }, grid: { color: '#333' } },
-            y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
-          }
-        }
-      });
     }
 
-    function restartTest() {
+    function resetTest() {
       time = 60;
-      wpmHistory = [];
-      charsTyped = 0;
-      errors = 0;
-      currentIndex = 0;
       timerEl.textContent = time;
-      liveWPMEl.textContent = 0;
-      resultsScreen.classList.add("hidden");
-      testScreen.classList.remove("hidden");
-      startTest();
+      inputEl.value = "";
+      inputEl.disabled = false;
+      started = false;
+      correctChars = 0;
+      totalTyped = 0;
+      textEl.style.display = "block";
+      resultEl.style.display = "none";
+      loadParagraph();
+      inputEl.focus();
     }
 
-    window.onload = startTest;
+    // init
+    loadParagraph();
+    inputEl.focus();
   </script>
 </body>
 </html>
